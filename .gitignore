@@ -65,6 +65,8 @@ tmp/
 # Personal working notes
 /notes/
 /drafts/
-/linkedin-guides/
 TODO.md
 NOTES.md
+
+# LinkedIn content (excluded from repo)
+/docs/linkedin-summary.md

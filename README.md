@@ -144,16 +144,6 @@ This project demonstrates proficiency in:
 
 For detailed deployment instructions, see [Deployment Guide](docs/deployment.md).
 
-## 📣 LinkedIn Highlights
-
-- Designed and implemented a **highly available, multi-AZ AWS architecture** spanning 3 availability zones
-- Developed complete **infrastructure as code** using Terraform with modular design
-- Created automated **CI/CD pipelines** using AWS CodePipeline and GitHub Actions
-- Implemented **defense-in-depth security** with VPC isolation, security groups, and IAM roles
-- Set up **comprehensive monitoring and alerting** with CloudWatch
-- Built a full-stack web application with React, Node.js, and Aurora MySQL
-- Applied DevOps best practices for **infrastructure automation**, **continuous delivery**, and **monitoring**
-
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
