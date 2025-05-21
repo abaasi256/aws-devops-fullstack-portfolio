@@ -1,0 +1,17 @@
+# Converting SVG to PNG
+
+The architecture diagram has been created as an SVG file (`architecture.svg`) in the docs directory. To convert it to PNG format:
+
+1. Open the SVG file in a web browser
+2. Use the browser's print function (Ctrl+P or Cmd+P)
+3. Select "Save as PDF" or similar option
+4. Use an online converter or local tool to convert the PDF to PNG
+5. Save the resulting file as `architecture.png` in this directory
+
+Alternatively, you can use tools like:
+
+- Inkscape (free, open-source): Open the SVG file and export as PNG
+- Adobe Illustrator: Open the SVG file and export as PNG
+- Online converters: Upload the SVG file to services like CloudConvert, SVG2PNG, etc.
+
+Once converted, replace this file with the actual PNG image.

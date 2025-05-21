@@ -1,0 +1,242 @@
+# CloudWatch Dashboard Configuration (CloudFormation Template)
+
+Resources:
+  DevOpsDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: DevOpsPortfolio-Dashboard
+      DashboardBody: !Sub |
+        {
+          "widgets": [
+            {
+              "type": "text",
+              "x": 0,
+              "y": 0,
+              "width": 24,
+              "height": 1,
+              "properties": {
+                "markdown": "# DevOps Portfolio Project Monitoring Dashboard\nShowing key metrics for the entire application stack."
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 1,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "view": "timeSeries",
+                "stacked": false,
+                "metrics": [
+                  [ "AWS/EC2", "CPUUtilization", "AutoScalingGroupName", "${AutoScalingGroupName}" ]
+                ],
+                "region": "${AWS::Region}",
+                "title": "EC2 CPU Utilization",
+                "period": 300,
+                "stat": "Average",
+                "yAxis": {
+                  "left": {
+                    "min": 0,
+                    "max": 100
+                  }
+                }
+              }
+            },
+            {
+              "type": "metric",
+              "x": 8,
+              "y": 1,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "view": "timeSeries",
+                "stacked": false,
+                "metrics": [
+                  [ "CWAgent", "mem_used_percent", "AutoScalingGroupName", "${AutoScalingGroupName}" ]
+                ],
+                "region": "${AWS::Region}",
+                "title": "EC2 Memory Utilization",
+                "period": 300,
+                "stat": "Average",
+                "yAxis": {
+                  "left": {
+                    "min": 0,
+                    "max": 100
+                  }
+                }
+              }
+            },
+            {
+              "type": "metric",
+              "x": 16,
+              "y": 1,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "view": "timeSeries",
+                "stacked": false,
+                "metrics": [
+                  [ "CWAgent", "disk_used_percent", "AutoScalingGroupName", "${AutoScalingGroupName}", "path", "/", "fstype", "xfs" ]
+                ],
+                "region": "${AWS::Region}",
+                "title": "EC2 Disk Utilization",
+                "period": 300,
+                "stat": "Average",
+                "yAxis": {
+                  "left": {
+                    "min": 0,
+                    "max": 100
+                  }
+                }
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 7,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "view": "timeSeries",
+                "stacked": false,
+                "metrics": [
+                  [ "AWS/RDS", "CPUUtilization", "DBClusterIdentifier", "${DBClusterIdentifier}" ]
+                ],
+                "region": "${AWS::Region}",
+                "title": "RDS CPU Utilization",
+                "period": 300,
+                "stat": "Average",
+                "yAxis": {
+                  "left": {
+                    "min": 0,
+                    "max": 100
+                  }
+                }
+              }
+            },
+            {
+              "type": "metric",
+              "x": 8,
+              "y": 7,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "view": "timeSeries",
+                "stacked": false,
+                "metrics": [
+                  [ "AWS/RDS", "FreeableMemory", "DBClusterIdentifier", "${DBClusterIdentifier}" ]
+                ],
+                "region": "${AWS::Region}",
+                "title": "RDS Freeable Memory",
+                "period": 300,
+                "stat": "Average"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 16,
+              "y": 7,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "view": "timeSeries",
+                "stacked": false,
+                "metrics": [
+                  [ "AWS/RDS", "DatabaseConnections", "DBClusterIdentifier", "${DBClusterIdentifier}" ]
+                ],
+                "region": "${AWS::Region}",
+                "title": "RDS Database Connections",
+                "period": 300,
+                "stat": "Average"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 13,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "view": "timeSeries",
+                "stacked": false,
+                "metrics": [
+                  [ "AWS/ApplicationELB", "RequestCount", "LoadBalancer", "${LoadBalancerFullName}" ]
+                ],
+                "region": "${AWS::Region}",
+                "title": "ALB Request Count",
+                "period": 300,
+                "stat": "Sum"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 8,
+              "y": 13,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "view": "timeSeries",
+                "stacked": false,
+                "metrics": [
+                  [ "AWS/ApplicationELB", "TargetResponseTime", "LoadBalancer", "${LoadBalancerFullName}" ]
+                ],
+                "region": "${AWS::Region}",
+                "title": "ALB Response Time",
+                "period": 300,
+                "stat": "Average"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 16,
+              "y": 13,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "view": "timeSeries",
+                "stacked": true,
+                "metrics": [
+                  [ "AWS/ApplicationELB", "HTTPCode_Target_2XX_Count", "LoadBalancer", "${LoadBalancerFullName}" ],
+                  [ ".", "HTTPCode_Target_3XX_Count", ".", "." ],
+                  [ ".", "HTTPCode_Target_4XX_Count", ".", "." ],
+                  [ ".", "HTTPCode_Target_5XX_Count", ".", "." ]
+                ],
+                "region": "${AWS::Region}",
+                "title": "ALB HTTP Status Codes",
+                "period": 300,
+                "stat": "Sum"
+              }
+            },
+            {
+              "type": "log",
+              "x": 0,
+              "y": 19,
+              "width": 24,
+              "height": 6,
+              "properties": {
+                "query": "SOURCE '/aws/ec2/devops-portfolio/error' | fields @timestamp, @message | sort @timestamp desc | limit 20",
+                "region": "${AWS::Region}",
+                "title": "Recent Application Errors",
+                "view": "table"
+              }
+            }
+          ]
+        }
+
+Parameters:
+  AutoScalingGroupName:
+    Type: String
+    Description: Name of the Auto Scaling Group
+
+  DBClusterIdentifier:
+    Type: String
+    Description: Identifier of the RDS DB Cluster
+
+  LoadBalancerFullName:
+    Type: String
+    Description: Full ARN of the Application Load Balancer
+
+Outputs:
+  DashboardName:
+    Description: Name of the CloudWatch Dashboard
+    Value: !Ref DevOpsDashboard

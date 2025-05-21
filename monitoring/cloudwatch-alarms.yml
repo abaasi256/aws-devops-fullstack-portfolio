@@ -1,0 +1,191 @@
+# CloudWatch Alarms Configuration (CloudFormation Template)
+
+Resources:
+  # High CPU Utilization Alarm
+  HighCPUAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: DevOpsPortfolio-HighCPU
+      AlarmDescription: Alarm if CPU exceeds 80% for 5 minutes
+      MetricName: CPUUtilization
+      Namespace: AWS/EC2
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 80
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: AutoScalingGroupName
+          Value: !Ref AutoScalingGroupName
+      AlarmActions:
+        - !Ref SNSTopic
+      InsufficientDataActions:
+        - !Ref SNSTopic
+
+  # Low Memory Alarm
+  LowMemoryAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: DevOpsPortfolio-LowMemory
+      AlarmDescription: Alarm if Memory Available falls below 20% for 5 minutes
+      MetricName: mem_available_percent
+      Namespace: CWAgent
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 20
+      ComparisonOperator: LessThanThreshold
+      Dimensions:
+        - Name: AutoScalingGroupName
+          Value: !Ref AutoScalingGroupName
+      AlarmActions:
+        - !Ref SNSTopic
+      InsufficientDataActions:
+        - !Ref SNSTopic
+
+  # High Disk Usage Alarm
+  HighDiskUsageAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: DevOpsPortfolio-HighDisk
+      AlarmDescription: Alarm if disk usage exceeds 80% for 5 minutes
+      MetricName: disk_used_percent
+      Namespace: CWAgent
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 80
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: AutoScalingGroupName
+          Value: !Ref AutoScalingGroupName
+        - Name: path
+          Value: /
+        - Name: fstype
+          Value: xfs
+      AlarmActions:
+        - !Ref SNSTopic
+      InsufficientDataActions:
+        - !Ref SNSTopic
+
+  # Aurora DB High CPU Alarm
+  DBHighCPUAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: DevOpsPortfolio-DB-HighCPU
+      AlarmDescription: Alarm if DB CPU exceeds 80% for 5 minutes
+      MetricName: CPUUtilization
+      Namespace: AWS/RDS
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 80
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: DBClusterIdentifier
+          Value: !Ref DBClusterIdentifier
+      AlarmActions:
+        - !Ref SNSTopic
+      InsufficientDataActions:
+        - !Ref SNSTopic
+
+  # Aurora DB Low Free Memory Alarm
+  DBLowMemoryAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: DevOpsPortfolio-DB-LowMemory
+      AlarmDescription: Alarm if DB free memory falls below 1GB for 5 minutes
+      MetricName: FreeableMemory
+      Namespace: AWS/RDS
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 1073741824  # 1GB in bytes
+      ComparisonOperator: LessThanThreshold
+      Dimensions:
+        - Name: DBClusterIdentifier
+          Value: !Ref DBClusterIdentifier
+      AlarmActions:
+        - !Ref SNSTopic
+      InsufficientDataActions:
+        - !Ref SNSTopic
+
+  # ALB High Latency Alarm
+  ALBHighLatencyAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: DevOpsPortfolio-ALB-HighLatency
+      AlarmDescription: Alarm if ALB response time exceeds 2 seconds for 5 minutes
+      MetricName: TargetResponseTime
+      Namespace: AWS/ApplicationELB
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 2
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: LoadBalancer
+          Value: !Ref LoadBalancerFullName
+      AlarmActions:
+        - !Ref SNSTopic
+      InsufficientDataActions:
+        - !Ref SNSTopic
+
+  # ALB 5XX Error Rate Alarm
+  ALB5XXErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: DevOpsPortfolio-ALB-5XXErrors
+      AlarmDescription: Alarm if ALB 5XX errors exceed 1% of requests for 5 minutes
+      MetricName: HTTPCode_ELB_5XX_Count
+      Namespace: AWS/ApplicationELB
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 10
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: LoadBalancer
+          Value: !Ref LoadBalancerFullName
+      AlarmActions:
+        - !Ref SNSTopic
+      InsufficientDataActions:
+        - !Ref SNSTopic
+
+  # SNS Topic for Alarms
+  SNSTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: DevOpsPortfolio-Alarms
+      DisplayName: DevOps Portfolio Alarms
+
+  # Optional - Email Subscription to SNS Topic
+  EmailSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref SNSTopic
+      Protocol: email
+      Endpoint: !Ref AlarmEmail
+
+Parameters:
+  AutoScalingGroupName:
+    Type: String
+    Description: Name of the Auto Scaling Group
+
+  DBClusterIdentifier:
+    Type: String
+    Description: Identifier of the RDS DB Cluster
+
+  LoadBalancerFullName:
+    Type: String
+    Description: Full ARN of the Application Load Balancer
+
+  AlarmEmail:
+    Type: String
+    Description: Email address to notify when alarms are triggered
+    Default: ""
+
+Outputs:
+  SNSTopicArn:
+    Description: ARN of the SNS Topic for alarms
+    Value: !Ref SNSTopic

@@ -1,0 +1,70 @@
+# Credentials and sensitive information
+.env
+.env.*
+*.pem
+aws.config
+credentials.json
+terraform.tfvars
+.terraform.tfstate.lock.info
+
+# Local dev environment
+node_modules/
+.vscode/
+.idea/
+__pycache__/
+.pytest_cache/
+*.pyc
+*.pyo
+*.egg-info/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+.directory
+
+# Build artifacts
+/dist/
+/build/
+/frontend/build/
+/backend/dist/
+.terraform/
+terraform.tfstate
+terraform.tfstate.backup
+*.tfstate.*
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Coverage and test reports
+coverage/
+.nyc_output/
+junit.xml
+report.*.json
+
+# Dependency lock files (optional, but often included)
+# package-lock.json
+# yarn.lock
+
+# AWS SAM / CDK
+.aws-sam/
+cdk.out/
+
+# Temporary files
+*.swp
+*.swo
+*~
+.tmp/
+tmp/
+
+# Personal working notes
+/notes/
+/drafts/
+/linkedin-guides/
+TODO.md
+NOTES.md

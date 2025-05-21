@@ -1,0 +1,147 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1200 800">
+  <!-- Background Grid -->
+  <rect width="1200" height="800" fill="#232f3e" />
+  <pattern id="smallGrid" width="20" height="20" patternUnits="userSpaceOnUse">
+    <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#394b59" stroke-width="0.5" />
+  </pattern>
+  <rect width="1200" height="800" fill="url(#smallGrid)" />
+
+  <!-- Main VPC Box -->
+  <rect x="120" y="120" width="820" height="620" fill="#152939" stroke="#4388cc" stroke-width="2" rx="5" />
+  <text x="150" y="160" font-family="Arial" font-size="24" fill="#ffffff">VPC (10.0.0.0/16)</text>
+
+  <!-- Public Subnet Section - AZ1 -->
+  <rect x="160" y="200" width="200" height="180" fill="rgba(59, 121, 55, 0.2)" stroke="#3b7937" stroke-width="2" stroke-dasharray="5,5" rx="3" />
+  <text x="170" y="220" font-family="Arial" font-size="14" fill="#ffffff">Public Subnet (10.0.1.0/24)</text>
+  <text x="280" y="240" font-family="Arial" font-size="12" fill="#cccccc">AZ 1</text>
+
+  <!-- App Subnet Section - AZ1 -->
+  <rect x="420" y="200" width="200" height="180" fill="rgba(67, 136, 204, 0.2)" stroke="#4388cc" stroke-width="2" stroke-dasharray="5,5" rx="3" />
+  <text x="430" y="220" font-family="Arial" font-size="14" fill="#ffffff">App Subnet (10.0.4.0/24)</text>
+  <text x="540" y="240" font-family="Arial" font-size="12" fill="#cccccc">AZ 1</text>
+
+  <!-- DB Subnet Section - AZ1 -->
+  <rect x="680" y="200" width="200" height="180" fill="rgba(213, 147, 62, 0.2)" stroke="#d5933e" stroke-width="2" stroke-dasharray="5,5" rx="3" />
+  <text x="690" y="220" font-family="Arial" font-size="14" fill="#ffffff">DB Subnet (10.0.7.0/24)</text>
+  <text x="800" y="240" font-family="Arial" font-size="12" fill="#cccccc">AZ 1</text>
+
+  <!-- Public Subnet Section - AZ2 -->
+  <rect x="160" y="480" width="200" height="180" fill="rgba(59, 121, 55, 0.2)" stroke="#3b7937" stroke-width="2" stroke-dasharray="5,5" rx="3" />
+  <text x="170" y="500" font-family="Arial" font-size="14" fill="#ffffff">Public Subnet (10.0.2.0/24)</text>
+  <text x="280" y="520" font-family="Arial" font-size="12" fill="#cccccc">AZ 2</text>
+
+  <!-- App Subnet Section - AZ2 -->
+  <rect x="420" y="480" width="200" height="180" fill="rgba(67, 136, 204, 0.2)" stroke="#4388cc" stroke-width="2" stroke-dasharray="5,5" rx="3" />
+  <text x="430" y="500" font-family="Arial" font-size="14" fill="#ffffff">App Subnet (10.0.5.0/24)</text>
+  <text x="540" y="520" font-family="Arial" font-size="12" fill="#cccccc">AZ 2</text>
+
+  <!-- DB Subnet Section - AZ2 -->
+  <rect x="680" y="480" width="200" height="180" fill="rgba(213, 147, 62, 0.2)" stroke="#d5933e" stroke-width="2" stroke-dasharray="5,5" rx="3" />
+  <text x="690" y="500" font-family="Arial" font-size="14" fill="#ffffff">DB Subnet (10.0.8.0/24)</text>
+  <text x="800" y="520" font-family="Arial" font-size="12" fill="#cccccc">AZ 2</text>
+
+  <!-- Internet Gateway -->
+  <circle cx="70" cy="390" r="40" fill="#7d44ab" stroke="#9761d8" stroke-width="2" />
+  <text x="70" y="440" font-family="Arial" font-size="14" fill="#ffffff" text-anchor="middle">Internet Gateway</text>
+
+  <!-- Line to VPC -->
+  <line x1="70" y1="350" x2="120" y2="350" stroke="#9761d8" stroke-width="2" marker-end="url(#arrowhead)" />
+
+  <!-- Route 53 -->
+  <rect x="450" y="60" width="120" height="40" rx="5" fill="#8c4fbe" stroke="#9761d8" stroke-width="2" />
+  <text x="510" y="85" font-family="Arial" font-size="14" fill="#ffffff" text-anchor="middle">Route 53</text>
+  
+  <!-- ACM Certificate -->
+  <rect x="600" y="60" width="140" height="40" rx="5" fill="#2f6b69" stroke="#3b8584" stroke-width="2" />
+  <text x="670" y="85" font-family="Arial" font-size="14" fill="#ffffff" text-anchor="middle">ACM Certificate</text>
+
+  <!-- Bastion Host -->
+  <rect x="210" y="280" width="80" height="80" rx="5" fill="#f58536" stroke="#fca66c" stroke-width="2" />
+  <text x="250" y="320" font-family="Arial" font-size="14" fill="#ffffff" text-anchor="middle">Bastion</text>
+  <text x="250" y="340" font-family="Arial" font-size="12" fill="#cccccc" text-anchor="middle">Host</text>
+
+  <!-- Application Load Balancer -->
+  <rect x="310" y="380" width="150" height="50" rx="5" fill="#7d44ab" stroke="#9761d8" stroke-width="2" />
+  <text x="385" y="400" font-family="Arial" font-size="14" fill="#ffffff" text-anchor="middle">Application</text>
+  <text x="385" y="420" font-family="Arial" font-size="14" fill="#ffffff" text-anchor="middle">Load Balancer</text>
+
+  <!-- NAT Gateway -->
+  <rect x="220" y="380" width="60" height="60" rx="5" fill="#7d44ab" stroke="#9761d8" stroke-width="2" />
+  <text x="250" y="410" font-family="Arial" font-size="14" fill="#ffffff" text-anchor="middle">NAT</text>
+  <text x="250" y="428" font-family="Arial" font-size="12" fill="#cccccc" text-anchor="middle">Gateway</text>
+
+  <!-- Web/App Server - AZ1 -->
+  <rect x="470" y="280" width="80" height="80" rx="5" fill="#f58536" stroke="#fca66c" stroke-width="2" />
+  <text x="510" y="315" font-family="Arial" font-size="14" fill="#ffffff" text-anchor="middle">EC2</text>
+  <text x="510" y="335" font-family="Arial" font-size="12" fill="#cccccc" text-anchor="middle">Frontend/Backend</text>
+
+  <!-- Web/App Server - AZ2 -->
+  <rect x="470" y="560" width="80" height="80" rx="5" fill="#f58536" stroke="#fca66c" stroke-width="2" />
+  <text x="510" y="595" font-family="Arial" font-size="14" fill="#ffffff" text-anchor="middle">EC2</text>
+  <text x="510" y="615" font-family="Arial" font-size="12" fill="#cccccc" text-anchor="middle">Frontend/Backend</text>
+
+  <!-- Aurora MySQL -->
+  <rect x="730" y="300" width="100" height="60" rx="5" fill="#f58536" stroke="#fca66c" stroke-width="2" />
+  <text x="780" y="330" font-family="Arial" font-size="14" fill="#ffffff" text-anchor="middle">Aurora MySQL</text>
+  <text x="780" y="350" font-family="Arial" font-size="12" fill="#cccccc" text-anchor="middle">Primary</text>
+
+  <!-- Aurora MySQL Replica -->
+  <rect x="730" y="500" width="100" height="60" rx="5" fill="#f58536" stroke="#fca66c" stroke-width="2" />
+  <text x="780" y="530" font-family="Arial" font-size="14" fill="#ffffff" text-anchor="middle">Aurora MySQL</text>
+  <text x="780" y="550" font-family="Arial" font-size="12" fill="#cccccc" text-anchor="middle">Replica</text>
+
+  <!-- CI/CD Pipeline -->
+  <rect x="980" y="200" width="180" height="100" rx="5" fill="#3b7937" stroke="#5db356" stroke-width="2" />
+  <text x="1070" y="235" font-family="Arial" font-size="14" fill="#ffffff" text-anchor="middle">CI/CD Pipeline</text>
+  <text x="1070" y="255" font-family="Arial" font-size="12" fill="#cccccc" text-anchor="middle">CodePipeline or</text>
+  <text x="1070" y="275" font-family="Arial" font-size="12" fill="#cccccc" text-anchor="middle">GitHub Actions</text>
+
+  <!-- CloudWatch -->
+  <rect x="980" y="320" width="180" height="80" rx="5" fill="#4288c3" stroke="#59acf8" stroke-width="2" />
+  <text x="1070" y="350" font-family="Arial" font-size="14" fill="#ffffff" text-anchor="middle">CloudWatch</text>
+  <text x="1070" y="370" font-family="Arial" font-size="12" fill="#cccccc" text-anchor="middle">Logs, Metrics, Alarms</text>
+
+  <!-- Auto Scaling Group -->
+  <rect x="980" y="420" width="180" height="80" rx="5" fill="#d5933e" stroke="#fbb57a" stroke-width="2" />
+  <text x="1070" y="450" font-family="Arial" font-size="14" fill="#ffffff" text-anchor="middle">Auto Scaling Group</text>
+  <text x="1070" y="470" font-family="Arial" font-size="12" fill="#cccccc" text-anchor="middle">EC2 Instances</text>
+
+  <!-- Terraform IaC -->
+  <rect x="980" y="520" width="180" height="80" rx="5" fill="#c2422b" stroke="#eb5534" stroke-width="2" />
+  <text x="1070" y="550" font-family="Arial" font-size="14" fill="#ffffff" text-anchor="middle">Terraform</text>
+  <text x="1070" y="570" font-family="Arial" font-size="12" fill="#cccccc" text-anchor="middle">Infrastructure as Code</text>
+
+  <!-- Connection lines -->
+  <!-- Define arrowhead marker -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="white" />
+    </marker>
+  </defs>
+
+  <!-- Bastion to App Server -->
+  <line x1="290" y1="320" x2="470" y2="320" stroke="white" stroke-width="2" marker-end="url(#arrowhead)" />
+  <text x="380" y="315" font-family="Arial" font-size="12" fill="#ffffff" text-anchor="middle">SSH</text>
+
+  <!-- ALB to App Servers -->
+  <line x1="385" y1="430" x2="470" y2="560" stroke="white" stroke-width="2" marker-end="url(#arrowhead)" />
+  <line x1="385" y1="380" x2="470" y2="320" stroke="white" stroke-width="2" marker-end="url(#arrowhead)" />
+
+  <!-- App Servers to RDS -->
+  <line x1="550" y1="320" x2="730" y2="330" stroke="white" stroke-width="2" marker-end="url(#arrowhead)" />
+  <line x1="550" y1="600" x2="730" y2="530" stroke="white" stroke-width="2" marker-end="url(#arrowhead)" />
+
+  <!-- RDS Primary to Replica -->
+  <line x1="780" y1="360" x2="780" y2="500" stroke="white" stroke-width="2" marker-end="url(#arrowhead)" />
+  <text x="800" y="430" font-family="Arial" font-size="12" fill="#ffffff">Replication</text>
+
+  <!-- Route53 to ALB -->
+  <line x1="510" y1="100" x2="385" y2="380" stroke="#9761d8" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrowhead)" />
+
+  <!-- Certificate to ALB -->
+  <line x1="670" y1="100" x2="385" y2="380" stroke="#3b8584" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrowhead)" />
+
+  <!-- Internet to IGW -->
+  <line x1="20" y1="390" x2="30" y2="390" stroke="white" stroke-width="2" marker-end="url(#arrowhead)" />
+  <text x="20" y="380" font-family="Arial" font-size="12" fill="#ffffff">Internet</text>
+</svg>
