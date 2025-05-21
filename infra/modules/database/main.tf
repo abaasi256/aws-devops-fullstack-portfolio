@@ -52,7 +52,7 @@ resource "aws_rds_cluster_instance" "aurora_instances" {
 # Create RDS Event Subscription for Notifications
 resource "aws_db_event_subscription" "aurora_events" {
   name      = "${var.project_name}-aurora-events"
-  sns_topic_arn = aws_sns_topic.db_events.arn
+  sns_topic = aws_sns_topic.db_events.arn
   source_type = "db-cluster"
   source_ids  = [aws_rds_cluster.aurora.id]
   

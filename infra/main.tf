@@ -124,7 +124,7 @@ module "monitoring" {
   log_retention_days   = var.log_retention_days
   autoscaling_group_name = module.compute.autoscaling_group_name
   db_cluster_identifier = module.database.cluster_identifier
-  alb_arn_suffix       = element(split("/", module.compute.alb_arn), 1)
+  alb_arn_suffix       = split("/", module.compute.alb_arn)[1]
   alarm_email          = var.alarm_email
 }
 
