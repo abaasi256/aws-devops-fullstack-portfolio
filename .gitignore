@@ -83,3 +83,19 @@ ssh_config*
 bastion_ip.txt
 alb_url.txt
 .last_deployment_key
+
+# Terraform state and backup files (security sensitive)
+*.tfstate
+*.tfstate.*
+terraform.tfstate.backup
+
+# SSH keys and certificates (security sensitive)
+*.pem
+*.key
+*.crt
+id_rsa*
+id_ed25519*
+
+# AWS CLI and configuration
+.aws/
+aws-exports.js
