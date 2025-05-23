@@ -41,6 +41,109 @@ If you're setting up a new IAM user for this project, ensure it has the followin
 - AWSCodeDeployFullAccess
 - AWSCodePipelineFullAccess
 
+## Setting Up an EC2 Key Pair for Deployment
+
+Before deploying the infrastructure, you need to create an EC2 key pair that will be used for SSH access to your instances and automated deployments via CI/CD pipelines.
+
+### Creating a Key Pair via AWS Console
+
+1. **Navigate to EC2 Console**:
+   - Open the AWS Console and go to the EC2 service
+   - In the left navigation pane, click on "Key Pairs" under "Network & Security"
+
+2. **Create Key Pair**:
+   - Click "Create key pair"
+   - Name: `devops-portfolio-key` (or your preferred name)
+   - Key pair type: RSA
+   - Private key file format: `.pem` (for OpenSSH)
+   - Click "Create key pair"
+
+3. **Download and Secure the Key**:
+   - The private key file will download automatically
+   - Move it to a secure location: `~/.ssh/devops-portfolio-key.pem`
+   - Set proper permissions: `chmod 400 ~/.ssh/devops-portfolio-key.pem`
+
+### Creating a Key Pair via AWS CLI
+
+```bash
+# Create the key pair and save the private key
+aws ec2 create-key-pair \
+    --key-name devops-portfolio-key \
+    --query 'KeyMaterial' \
+    --output text > ~/.ssh/devops-portfolio-key.pem
+
+# Set proper permissions
+chmod 400 ~/.ssh/devops-portfolio-key.pem
+```
+
+### Adding the Private Key to GitHub Actions Secrets
+
+For automated deployments via GitHub Actions:
+
+1. **Encode the Private Key**:
+   ```bash
+   cat ~/.ssh/devops-portfolio-key.pem | base64
+   ```
+
+2. **Add to GitHub Secrets**:
+   - Go to your GitHub repository
+   - Navigate to Settings → Secrets and variables → Actions
+   - Click "New repository secret"
+   - Name: `EC2_PRIVATE_KEY`
+   - Value: Paste the base64-encoded private key
+   - Click "Add secret"
+
+### Adding the Private Key to AWS Systems Manager (Alternative)
+
+For enhanced security, you can store the private key in AWS Systems Manager Parameter Store:
+
+```bash
+# Store the private key in Parameter Store
+aws ssm put-parameter \
+    --name "/devops-portfolio/ssh/private-key" \
+    --value "$(cat ~/.ssh/devops-portfolio-key.pem)" \
+    --type "SecureString" \
+    --description "Private key for EC2 SSH access"
+```
+
+### How the Key is Used in CI/CD
+
+The EC2 key pair serves several purposes in the deployment pipeline:
+
+1. **Infrastructure Provisioning**: Terraform assigns the key pair to all EC2 instances
+2. **SSH Access**: Allows secure shell access to instances for debugging and maintenance
+3. **Automated Deployment**: CI/CD pipelines use the key for:
+   - Copying deployment artifacts to instances
+   - Running deployment scripts
+   - Performing health checks
+   - Rolling back deployments if needed
+
+### Security Best Practices
+
+- **Never commit private keys to version control**
+- **Use different key pairs for different environments** (dev, staging, prod)
+- **Rotate key pairs regularly** (every 90 days recommended)
+- **Limit SSH access** by configuring security groups appropriately
+- **Consider using AWS Systems Manager Session Manager** for enhanced security
+
+### Testing SSH Access
+
+After deployment, test SSH access to your instances:
+
+```bash
+# Get instance IP from Terraform output or AWS Console
+ssh -i ~/.ssh/devops-portfolio-key.pem ec2-user@<instance-ip>
+```
+
+### Troubleshooting Key Pair Issues
+
+Common issues and solutions:
+
+- **Permission denied (publickey)**: Check file permissions (`chmod 400`)
+- **Key not found**: Verify the key name in `terraform.tfvars`
+- **Connection refused**: Check security group SSH rules (port 22)
+- **Host key verification failed**: Run `ssh-keyscan <instance-ip> >> ~/.ssh/known_hosts`
+
 ## Infrastructure Deployment
 
 ### 1. Clone the Repository
@@ -65,11 +168,14 @@ project_name = "devops-portfolio"
 environment  = "prod"
 aws_region   = "us-east-1"
 
+# EC2 Configuration
+ec2_key_name = "devops-portfolio-key"  # Name of your EC2 key pair
+
 # Database Configuration
 db_master_username = "admin"
 db_master_password = "YourSecurePasswordHere"
 
-# Domain Configuration
+# Domain Configuration (optional)
 domain_name      = "yourdomain.com"
 route53_zone_id  = "Z1234567890ABC"
 ```

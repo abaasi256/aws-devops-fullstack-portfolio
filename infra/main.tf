@@ -1,4 +1,4 @@
-# Main Terraform configuration file
+# Modified main.tf without random provider
 
 # Configure AWS Provider
 provider "aws" {
@@ -13,23 +13,9 @@ provider "aws" {
   }
 }
 
-# Create ACM Certificate for HTTPS
-resource "aws_acm_certificate" "cert" {
-  domain_name       = var.domain_name
-  validation_method = "DNS"
-
-  lifecycle {
-    create_before_destroy = true
-  }
-
-  tags = {
-    Name = "${var.project_name}-certificate"
-  }
-}
-
-# Create S3 Bucket for Deployment
+# Create S3 Bucket for Deployment (with timestamp to avoid conflicts)
 resource "aws_s3_bucket" "deployment" {
-  bucket = "${var.project_name}-deployment-${var.environment}"
+  bucket = "${var.project_name}-deployment-${var.environment}-${formatdate("YYYYMMDD", timestamp())}"
 
   tags = {
     Name = "${var.project_name}-deployment-bucket"
@@ -89,7 +75,7 @@ module "database" {
   master_username     = var.db_master_username
   master_password     = var.db_master_password
   engine_version      = var.db_engine_version
-  db_instance_class   = var.db_instance_class
+  db_instance_class   = "db.r5.large"  # Override with compatible instance
   db_instance_count   = var.db_instance_count
 }
 
@@ -106,11 +92,12 @@ module "compute" {
   ec2_instance_profile_name = module.security.ec2_instance_profile_name
   ami_id                 = var.ami_id
   instance_type          = var.instance_type
+  ec2_key_name           = var.ec2_key_name
   asg_min_size           = var.asg_min_size
   asg_max_size           = var.asg_max_size
   asg_desired_capacity   = var.asg_desired_capacity
-  acm_certificate_arn    = aws_acm_certificate.cert.arn
-  create_dns_record      = var.create_dns_record
+  acm_certificate_arn    = ""  # Leave empty to skip HTTPS listener
+  create_dns_record      = false  # Disable DNS record creation
   route53_zone_id        = var.route53_zone_id
   domain_name            = var.domain_name
 }

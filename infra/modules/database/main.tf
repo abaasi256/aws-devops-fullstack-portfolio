@@ -15,7 +15,7 @@ resource "aws_db_subnet_group" "aurora" {
 resource "aws_rds_cluster" "aurora" {
   cluster_identifier     = "${var.project_name}-aurora-cluster"
   engine                 = "aurora-mysql"
-  engine_version         = var.engine_version
+  engine_version         = "8.0.mysql_aurora.3.04.0"  # Updated to valid version
   availability_zones     = var.availability_zones
   database_name          = var.database_name
   master_username        = var.master_username
@@ -38,9 +38,9 @@ resource "aws_rds_cluster_instance" "aurora_instances" {
   count                = var.db_instance_count
   identifier           = "${var.project_name}-aurora-instance-${count.index}"
   cluster_identifier   = aws_rds_cluster.aurora.id
-  instance_class       = var.db_instance_class
+  instance_class       = "db.r5.large"  # Changed to compatible instance class
   engine               = "aurora-mysql"
-  engine_version       = var.engine_version
+  engine_version       = "8.0.mysql_aurora.3.04.0"  # Updated to match cluster version
   db_subnet_group_name = aws_db_subnet_group.aurora.name
   publicly_accessible  = false
 

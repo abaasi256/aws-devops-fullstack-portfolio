@@ -1,0 +1,52 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 16
+
+    - name: Build frontend
+      run: |
+        cd frontend
+        npm install
+        npm run build
+        cd ..
+
+    - name: Prepare deployment package
+      run: |
+        mkdir -p deployment-package/frontend/build
+        cp -r backend/* deployment-package/
+        cp -r frontend/build/* deployment-package/frontend/build/
+        cd deployment-package
+        zip -r ../deployment.zip *
+
+    - name: Upload to S3
+      run: |
+        aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws configure set default.region ${{ secrets.AWS_REGION }}
+        aws s3 cp deployment.zip s3://${{ secrets.S3_BUCKET }}/deployment.zip
+
+    - name: Deploy on EC2
+      run: |
+        echo "${{ secrets.EC2_PRIVATE_KEY }}" | base64 -d > ec2_key.pem
+        chmod 400 ec2_key.pem
+        ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@<EC2_PUBLIC_IP> << 'EOF'
+          aws s3 cp s3://${{ secrets.S3_BUCKET }}/deployment.zip .
+          unzip -o deployment.zip -d /opt/app
+          cd /opt/app
+          npm install --production
+          pm2 restart server || pm2 start server.js
+        EOF

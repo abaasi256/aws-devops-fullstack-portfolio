@@ -104,31 +104,42 @@ This project demonstrates proficiency in:
 - AWS Account with appropriate permissions
 - Terraform (v1.0+) installed
 - AWS CLI configured with access credentials
+- EC2 Key Pair created for SSH access (see [deployment guide](docs/deployment.md#setting-up-an-ec2-key-pair-for-deployment))
 - Domain name (optional, for HTTPS)
 
 ### Deployment Steps
 
-1. **Clone the repository**:
+1. **Create EC2 Key Pair**:
+   ```bash
+   # Create key pair for SSH access
+   aws ec2 create-key-pair \
+       --key-name devops-portfolio-key \
+       --query 'KeyMaterial' \
+       --output text > ~/.ssh/devops-portfolio-key.pem
+   chmod 400 ~/.ssh/devops-portfolio-key.pem
+   ```
+
+2. **Clone the repository**:
    ```bash
    git clone https://github.com/yourusername/aws-devops-fullstack-portfolio.git
    cd aws-devops-fullstack-portfolio
    ```
 
-2. **Configure Terraform variables**:
+3. **Configure Terraform variables**:
    ```bash
    cd infra
    cp terraform.tfvars.example terraform.tfvars
-   # Edit terraform.tfvars with your specific configurations
+   # Edit terraform.tfvars with your specific configurations (including ec2_key_name)
    ```
 
-3. **Initialize and apply Terraform**:
+4. **Initialize and apply Terraform**:
    ```bash
    terraform init
    terraform plan
    terraform apply
    ```
 
-4. **Set up CI/CD pipeline**:
+5. **Set up CI/CD pipeline**:
    ```bash
    cd ../ci/aws
    ./setup-pipeline.sh
@@ -136,7 +147,7 @@ This project demonstrates proficiency in:
    # Configure GitHub Actions in your repository settings
    ```
 
-5. **Configure monitoring**:
+6. **Configure monitoring**:
    ```bash
    cd ../monitoring
    ./setup-monitoring.sh

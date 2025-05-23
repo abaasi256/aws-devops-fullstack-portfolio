@@ -45,6 +45,12 @@ variable "instance_type" {
   default     = "t3.medium"
 }
 
+variable "ec2_key_name" {
+  description = "Name of the EC2 key pair for SSH access"
+  type        = string
+  default     = ""
+}
+
 variable "asg_min_size" {
   description = "Minimum size of the Auto Scaling Group"
   type        = number
