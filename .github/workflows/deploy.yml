@@ -3,50 +3,204 @@ name: Deploy to EC2
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:  # Allow manual trigger
+
+env:
+  NODE_VERSION: '18'
+  AWS_REGION: 'us-east-1'
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
+    
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set up Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
-        node-version: 16
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install frontend dependencies
+      working-directory: ./frontend
+      run: npm ci
 
     - name: Build frontend
-      run: |
-        cd frontend
-        npm install
-        npm run build
-        cd ..
+      working-directory: ./frontend
+      run: npm run build
 
-    - name: Prepare deployment package
+    - name: Install backend dependencies
+      working-directory: ./backend
+      run: npm ci --production
+
+    - name: Create deployment package
       run: |
-        mkdir -p deployment-package/frontend/build
+        mkdir -p deployment-package
+        # Copy backend files
         cp -r backend/* deployment-package/
-        cp -r frontend/build/* deployment-package/frontend/build/
+        # Copy frontend build
+        mkdir -p deployment-package/frontend
+        cp -r frontend/build deployment-package/frontend/
+        # Create deployment scripts
+        cp ci/aws/scripts/* deployment-package/ 2>/dev/null || true
+        # Create deployment archive
         cd deployment-package
-        zip -r ../deployment.zip *
+        zip -r ../deployment.zip . -x "*.git*" "node_modules/.cache/*"
 
-    - name: Upload to S3
-      run: |
-        aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws configure set default.region ${{ secrets.AWS_REGION }}
-        aws s3 cp deployment.zip s3://${{ secrets.S3_BUCKET }}/deployment.zip
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
 
-    - name: Deploy on EC2
+    - name: Upload deployment package to S3
       run: |
+        TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+        S3_KEY="deployments/deployment_${TIMESTAMP}.zip"
+        aws s3 cp deployment.zip s3://${{ secrets.S3_DEPLOYMENT_BUCKET }}/${S3_KEY}
+        echo "S3_KEY=${S3_KEY}" >> $GITHUB_ENV
+
+    - name: Get EC2 instance IPs
+      id: get-instances
+      run: |
+        # Get private IPs of instances in the Auto Scaling Group
+        ASG_NAME="${{ secrets.PROJECT_NAME }}-asg"
+        INSTANCE_IDS=$(aws autoscaling describe-auto-scaling-groups \
+          --auto-scaling-group-names $ASG_NAME \
+          --query 'AutoScalingGroups[0].Instances[?LifecycleState==`InService`].InstanceId' \
+          --output text)
+        
+        PRIVATE_IPS=""
+        for INSTANCE_ID in $INSTANCE_IDS; do
+          PRIVATE_IP=$(aws ec2 describe-instances \
+            --instance-ids $INSTANCE_ID \
+            --query 'Reservations[0].Instances[0].PrivateIpAddress' \
+            --output text)
+          PRIVATE_IPS="$PRIVATE_IPS $PRIVATE_IP"
+        done
+        
+        echo "instance_ips=$PRIVATE_IPS" >> $GITHUB_OUTPUT
+        echo "Found instances: $PRIVATE_IPS"
+
+    - name: Get bastion host IP
+      id: get-bastion
+      run: |
+        # Get bastion host public IP
+        BASTION_IP=$(aws ec2 describe-instances \
+          --filters "Name=tag:Name,Values=${{ secrets.PROJECT_NAME }}-bastion" \
+                   "Name=instance-state-name,Values=running" \
+          --query 'Reservations[0].Instances[0].PublicIpAddress' \
+          --output text)
+        echo "bastion_ip=$BASTION_IP" >> $GITHUB_OUTPUT
+        echo "Bastion IP: $BASTION_IP"
+
+    - name: Deploy to EC2 instances
+      run: |
+        # Decode and setup SSH key
         echo "${{ secrets.EC2_PRIVATE_KEY }}" | base64 -d > ec2_key.pem
         chmod 400 ec2_key.pem
-        ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@<EC2_PUBLIC_IP> << 'EOF'
-          aws s3 cp s3://${{ secrets.S3_BUCKET }}/deployment.zip .
-          unzip -o deployment.zip -d /opt/app
-          cd /opt/app
-          npm install --production
-          pm2 restart server || pm2 start server.js
+        
+        # Create SSH config for bastion jumping
+        cat > ssh_config << EOF
+        Host bastion
+          HostName ${{ steps.get-bastion.outputs.bastion_ip }}
+          User ec2-user
+          IdentityFile ec2_key.pem
+          StrictHostKeyChecking no
+          UserKnownHostsFile /dev/null
+        
+        Host private-*
+          User ec2-user
+          IdentityFile ec2_key.pem
+          ProxyJump bastion
+          StrictHostKeyChecking no
+          UserKnownHostsFile /dev/null
         EOF
+        
+        # Deploy to each instance
+        for PRIVATE_IP in ${{ steps.get-instances.outputs.instance_ips }}; do
+          echo "Deploying to instance: $PRIVATE_IP"
+          
+          ssh -F ssh_config private-$PRIVATE_IP << 'EOF'
+            set -e
+            
+            # Download deployment package
+            aws s3 cp s3://${{ secrets.S3_DEPLOYMENT_BUCKET }}/${{ env.S3_KEY }} /tmp/deployment.zip
+            
+            # Backup current deployment
+            sudo mkdir -p /opt/app-backup
+            sudo cp -r /opt/app/* /opt/app-backup/ 2>/dev/null || true
+            
+            # Extract new deployment
+            cd /tmp
+            unzip -o deployment.zip -d /tmp/new-deployment
+            
+            # Stop application
+            sudo systemctl stop app || true
+            pm2 stop all || true
+            
+            # Deploy new version
+            sudo rm -rf /opt/app/*
+            sudo cp -r /tmp/new-deployment/* /opt/app/
+            sudo chown -R ec2-user:ec2-user /opt/app
+            
+            # Install/update dependencies
+            cd /opt/app
+            npm install --production
+            
+            # Start application
+            pm2 start server.js --name "app" || pm2 restart app
+            sudo systemctl start app || true
+            
+            # Health check
+            sleep 10
+            if curl -f http://localhost:3000/health; then
+              echo "Deployment successful on $PRIVATE_IP"
+            else
+              echo "Health check failed on $PRIVATE_IP"
+              # Rollback
+              sudo systemctl stop app || true
+              pm2 stop all || true
+              sudo rm -rf /opt/app/*
+              sudo cp -r /opt/app-backup/* /opt/app/ 2>/dev/null || true
+              sudo chown -R ec2-user:ec2-user /opt/app
+              pm2 start server.js --name "app"
+              exit 1
+            fi
+            
+            # Cleanup
+            rm -rf /tmp/deployment.zip /tmp/new-deployment
+        EOF
+        done
+
+    - name: Verify deployment
+      run: |
+        # Wait for ALB health checks
+        sleep 30
+        
+        # Get ALB DNS name
+        ALB_DNS=$(aws elbv2 describe-load-balancers \
+          --names "${{ secrets.PROJECT_NAME }}-alb" \
+          --query 'LoadBalancers[0].DNSName' \
+          --output text)
+        
+        # Test application endpoint
+        if curl -f http://$ALB_DNS/health; then
+          echo "✅ Deployment verification successful!"
+          echo "Application is accessible at: http://$ALB_DNS"
+        else
+          echo "❌ Deployment verification failed!"
+          exit 1
+        fi
+
+    - name: Notify deployment status
+      if: always()
+      run: |
+        if [ "${{ job.status }}" == "success" ]; then
+          echo "🚀 Deployment completed successfully!"
+        else
+          echo "💥 Deployment failed!"
+        fi

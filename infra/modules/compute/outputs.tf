@@ -27,3 +27,13 @@ output "launch_template_id" {
   description = "ID of the Launch Template"
   value       = aws_launch_template.app.id
 }
+
+output "bastion_public_ip" {
+  description = "The public IP address of the bastion host"
+  value       = var.create_bastion ? aws_eip.bastion[0].public_ip : null
+}
+
+output "bastion_instance_id" {
+  description = "The instance ID of the bastion host"
+  value       = var.create_bastion ? aws_instance.bastion[0].id : null
+}

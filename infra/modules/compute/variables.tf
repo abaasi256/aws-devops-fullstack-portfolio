@@ -91,3 +91,15 @@ variable "domain_name" {
   type        = string
   default     = ""
 }
+
+variable "create_bastion" {
+  description = "Whether to create a bastion host for SSH access"
+  type        = bool
+  default     = true
+}
+
+variable "ssh_allowed_cidrs" {
+  description = "CIDR blocks allowed to SSH to bastion host"
+  type        = list(string)
+  default     = ["0.0.0.0/0"]
+}

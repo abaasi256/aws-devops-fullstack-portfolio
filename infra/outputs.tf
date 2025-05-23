@@ -64,3 +64,13 @@ output "application_url" {
   description = "URL of the application"
   value       = "https://${var.domain_name}"
 }
+
+output "bastion_public_ip" {
+  description = "Public IP address of the bastion host"
+  value       = module.compute.bastion_public_ip
+}
+
+output "bastion_ssh_command" {
+  description = "SSH command to connect to the bastion host"
+  value       = module.compute.bastion_public_ip != null ? "ssh -i ~/.ssh/${var.ec2_key_name}.pem ec2-user@${module.compute.bastion_public_ip}" : "No bastion host created"
+}
