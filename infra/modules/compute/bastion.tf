@@ -1,17 +1,19 @@
 # Bastion Host for SSH Access to Private Instances
 
+# Bastion Host for SSH Access to Private Instances
+
 # Security Group for Bastion Host
 resource "aws_security_group" "bastion" {
   name        = "${var.project_name}-bastion-sg"
   description = "Security group for bastion host"
   vpc_id      = var.vpc_id
 
-  # SSH from allowed CIDRs
+  # SSH from anywhere (should be restricted in production)
   ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = var.ssh_allowed_cidrs
+    cidr_blocks = ["0.0.0.0/0"]  # TODO: Restrict to specific IPs in production
     description = "SSH from allowed CIDRs"
   }
 

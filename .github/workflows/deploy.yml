@@ -1,5 +1,14 @@
 name: Deploy to EC2
 
+# NOTE: This workflow requires the following secrets to be configured in GitHub:
+# - AWS_ACCESS_KEY_ID: AWS access key for deployment
+# - AWS_SECRET_ACCESS_KEY: AWS secret access key
+# - S3_DEPLOYMENT_BUCKET: S3 bucket name for deployment artifacts
+# - EC2_PRIVATE_KEY: Base64 encoded EC2 private key for SSH
+# - PROJECT_NAME: Project name (usually "devops-portfolio")
+#
+# See docs/deployment.md for detailed setup instructions
+
 on:
   push:
     branches: [ main ]

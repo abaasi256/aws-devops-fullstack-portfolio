@@ -93,7 +93,6 @@ module "compute" {
   ami_id                 = var.ami_id
   instance_type          = var.instance_type
   ec2_key_name           = var.ec2_key_name
-  ssh_allowed_cidrs      = var.ssh_allowed_cidrs
   asg_min_size           = var.asg_min_size
   asg_max_size           = var.asg_max_size
   asg_desired_capacity   = var.asg_desired_capacity
