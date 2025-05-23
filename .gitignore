@@ -70,3 +70,16 @@ NOTES.md
 
 # LinkedIn content (excluded from repo)
 /docs/linkedin-summary.md
+
+# Temporary deployment files
+deploy.sh
+manual-deploy.sh
+deploy-via-bastion.sh
+diagnose-502.sh
+verify-app.sh
+deployment.zip
+deployment-package/
+ssh_config*
+bastion_ip.txt
+alb_url.txt
+.last_deployment_key

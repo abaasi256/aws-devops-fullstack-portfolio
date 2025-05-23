@@ -228,56 +228,150 @@ mysql -h <db_endpoint> -u <username> -p
 
 ## Application Deployment
 
-If you're using the CI/CD pipeline (recommended), the application will be deployed automatically when you push to the main branch.
+### Manual Deployment Methods
 
-For manual deployment:
+Since the application deployment requires manual intervention, here are the recommended approaches:
 
-### 1. Build Frontend
+#### Method 1: AWS Systems Manager (Recommended)
 
+**Advantages:**
+- No SSH connectivity issues
+- Direct access through AWS console
+- Built-in logging and session recording
+
+**Steps:**
+1. **Get Instance ID:**
+   ```bash
+   INSTANCE_ID=$(aws autoscaling describe-auto-scaling-groups \
+       --auto-scaling-group-names "devops-portfolio-asg" \
+       --query 'AutoScalingGroups[0].Instances[0].InstanceId' \
+       --output text)
+   echo "Instance ID: $INSTANCE_ID"
+   ```
+
+2. **Connect to Instance:**
+   ```bash
+   aws ssm start-session --target $INSTANCE_ID --region us-east-1
+   ```
+
+3. **Deploy Application:**
+   ```bash
+   # Build and package application locally first
+   cd frontend && npm install && npm run build && cd ..
+   cd backend && npm install --production && cd ..
+   
+   # Create deployment package
+   mkdir deployment-package
+   cp -r backend/* deployment-package/
+   mkdir -p deployment-package/frontend
+   cp -r frontend/build deployment-package/frontend/
+   cd deployment-package && zip -r ../deployment.zip . && cd ..
+   
+   # Upload to S3
+   S3_BUCKET=$(cd infra && terraform output -raw deployment_bucket)
+   aws s3 cp deployment.zip s3://$S3_BUCKET/deployment.zip
+   
+   # On the EC2 instance (via Session Manager):
+   aws s3 cp s3://[S3_BUCKET]/deployment.zip /tmp/
+   cd /tmp && unzip -o deployment.zip -d new-deployment
+   sudo rm -rf /opt/app/* && sudo cp -r new-deployment/* /opt/app/
+   sudo chown -R ec2-user:ec2-user /opt/app
+   cd /opt/app && npm install --production
+   pm2 start server.js --name "app" || pm2 restart app
+   curl localhost:3000/health  # Should return "OK"
+   ```
+
+#### Method 2: SSH via Bastion Host
+
+**Prerequisites:**
+- Bastion host deployed (included in Terraform)
+- SSH key properly configured
+
+**Steps:**
+1. **Get Connection Information:**
+   ```bash
+   cd infra
+   BASTION_IP=$(terraform output -raw bastion_public_ip)
+   echo "Bastion IP: $BASTION_IP"
+   ```
+
+2. **Connect via Bastion:**
+   ```bash
+   # Copy SSH key to bastion (one-time setup)
+   scp -i ~/.ssh/devops-portfolio-key.pem ~/.ssh/devops-portfolio-key.pem ec2-user@$BASTION_IP:~/.ssh/
+   
+   # SSH to bastion
+   ssh -i ~/.ssh/devops-portfolio-key.pem ec2-user@$BASTION_IP
+   
+   # From bastion, connect to private instance
+   chmod 400 ~/.ssh/devops-portfolio-key.pem
+   PRIVATE_IP=[GET_FROM_ASG_OR_TERRAFORM_OUTPUT]
+   ssh -i ~/.ssh/devops-portfolio-key.pem ec2-user@$PRIVATE_IP
+   ```
+
+3. **Deploy Application** (same steps as Method 1 once connected)
+
+### Health Check Configuration
+
+**Important:** The Auto Scaling Group health checks can cause instance termination loops if the application doesn't start quickly enough.
+
+**Recommended Settings:**
 ```bash
-cd frontend
-npm install
-npm run build
+# Increase health check grace period to 10 minutes
+aws autoscaling update-auto-scaling-group \
+    --auto-scaling-group-name "devops-portfolio-asg" \
+    --health-check-grace-period 600 \
+    --region us-east-1
+
+# Update target group health check settings
+aws elbv2 modify-target-group \
+    --target-group-arn $(aws elbv2 describe-target-groups --names "devops-portfolio-tg" --query 'TargetGroups[0].TargetGroupArn' --output text) \
+    --health-check-path "/health" \
+    --healthy-threshold-count 2 \
+    --unhealthy-threshold-count 5 \
+    --health-check-timeout-seconds 10 \
+    --health-check-interval-seconds 60 \
+    --region us-east-1
 ```
 
-### 2. Prepare Backend
+### Verification
 
-```bash
-cd ../backend
-npm install
-```
+After deployment, verify the application:
 
-### 3. Create Deployment Package
+1. **Local Health Check** (on EC2 instance):
+   ```bash
+   curl localhost:3000/health  # Should return "OK"
+   pm2 status  # Should show app as "online"
+   ```
 
-```bash
-cd ..
-mkdir -p deployment-package
-cp -r backend/* deployment-package/
-mkdir -p deployment-package/frontend/build
-cp -r frontend/build/* deployment-package/frontend/build/
-cd deployment-package
-zip -r ../deployment.zip *
-```
+2. **External Health Check**:
+   ```bash
+   ALB_URL=$(cd infra && terraform output -raw alb_dns_name)
+   curl "http://$ALB_URL/health"  # Should return "OK" (may take 2-3 minutes)
+   ```
 
-### 4. Deploy to EC2
+3. **Browse Application**:
+   ```
+   http://[ALB_DNS_NAME]
+   ```
 
-Upload the deployment.zip file to an S3 bucket:
+### Troubleshooting
 
-```bash
-aws s3 cp deployment.zip s3://<your-deployment-bucket>/deployment.zip
-```
+#### 502 Bad Gateway
+- **Cause**: Backend application not running or health checks failing
+- **Solution**: Check PM2 status, restart application, verify health check path
 
-Then, SSH into the EC2 instance and deploy:
+#### Instance Termination Loop
+- **Cause**: Health check grace period too short
+- **Solution**: Increase grace period and deploy application quickly
 
-```bash
-ssh -i your-key.pem ec2-user@<ec2-instance-ip>
-mkdir -p /opt/app
-cd /opt/app
-aws s3 cp s3://<your-deployment-bucket>/deployment.zip .
-unzip deployment.zip
-npm install --production
-pm2 start server.js
-```
+#### SSH Connection Issues
+- **Cause**: Security group rules or network connectivity
+- **Solution**: Use AWS Systems Manager as alternative, verify security groups
+
+#### Application Not Starting
+- **Cause**: Missing dependencies, incorrect paths, or environment issues
+- **Solution**: Check logs with `pm2 logs`, verify file permissions and paths
 
 ## CI/CD Pipeline Setup
 

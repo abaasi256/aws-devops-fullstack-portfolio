@@ -132,28 +132,62 @@ This project demonstrates proficiency in:
    # Edit terraform.tfvars with your specific configurations (including ec2_key_name)
    ```
 
-4. **Initialize and apply Terraform**:
+4. **Deploy infrastructure**:
    ```bash
    terraform init
    terraform plan
    terraform apply
    ```
 
-5. **Set up CI/CD pipeline**:
+5. **Deploy application**:
+   
+   **Option 1: Via AWS Systems Manager (Recommended)**
    ```bash
-   cd ../ci/aws
-   ./setup-pipeline.sh
-   # OR
-   # Configure GitHub Actions in your repository settings
+   # Get instance ID from Auto Scaling Group
+   INSTANCE_ID=$(aws autoscaling describe-auto-scaling-groups \
+       --auto-scaling-group-names "devops-portfolio-asg" \
+       --query 'AutoScalingGroups[0].Instances[0].InstanceId' \
+       --output text)
+   
+   # Connect and deploy
+   aws ssm start-session --target $INSTANCE_ID --region us-east-1
+   # Follow manual deployment steps in docs/deployment.md
+   ```
+   
+   **Option 2: Via Bastion Host**
+   ```bash
+   # Get bastion IP from terraform output
+   BASTION_IP=$(cd infra && terraform output -raw bastion_public_ip)
+   
+   # SSH to bastion, then to private instance
+   ssh -i ~/.ssh/devops-portfolio-key.pem ec2-user@$BASTION_IP
+   # Follow SSH deployment steps in docs/deployment.md
    ```
 
-6. **Configure monitoring**:
+6. **Verify deployment**:
    ```bash
-   cd ../monitoring
-   ./setup-monitoring.sh
+   # Get ALB URL and test
+   ALB_URL=$(cd infra && terraform output -raw alb_dns_name)
+   curl "http://$ALB_URL/health"
    ```
 
-For detailed deployment instructions, see [Deployment Guide](docs/deployment.md).
+For detailed deployment instructions and troubleshooting, see [Deployment Guide](docs/deployment.md).
+
+## 🔧 Infrastructure Management
+
+### Destroy Infrastructure
+```bash
+# Clean up all resources when done
+cd infra
+terraform destroy
+```
+
+### Common Issues
+- **502 Bad Gateway**: Application not deployed or health checks failing
+- **SSH Connection Issues**: Use AWS Systems Manager as alternative
+- **Permission Errors**: Ensure IAM user has necessary permissions
+
+See [docs/deployment.md](docs/deployment.md) for detailed troubleshooting guide.
 
 ## License
 
